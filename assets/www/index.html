@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta name="viewport" content="width=320; user-scalable=no" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Digital Mass</title>
+      <link rel="stylesheet" href="master.css" type="text/css" media="screen" title="no title">
+      <script type="text/javascript" charset="utf-8" src="cordova-1.5.0.js"></script>
+      <script type="text/javascript" charset="utf-8" src="main.js"></script>
+      <script type="text/javascript" charset="utf-8" src="bike.js"></script>
+
+</head>
+<body onload="init();" id="stage" class="theme">
+    
+    <div id="thedata">
+        <dl id="ridedata" style="display:none;" >
+          <dt>Lat:</dt><dd id="lati">-</dd>
+          <dt>Long:</dt><dd id="longi">-</dd>
+      	  <dt>Compass:</dt><dd id="h">-</dd>
+      	  <br />
+          <dt>X:</dt><dd id="x">&nbsp;</dd>
+          <dt>Y:</dt><dd id="y">&nbsp;</dd>
+          <dt>Z:</dt><dd id="z">&nbsp;</dd>
+          <dt>timestamp:</dt><dd id="timestamp">&nbsp;</dd>
+          <br />
+          <dt>Network:</dt><dd id="connection">&nbsp;</dd>
+        </dl>
+
+        <dl id="hardware" >
+            <dt>Platform:</dt><dd id="platform"> &nbsp;</dd>
+            <dt>Version: </dt><dd id="version">&nbsp;</dd>
+            <dt>UUID:</dt><dd id="uuid"> &nbsp;</dd>
+            <dt>Name:</dt><dd id="name">&nbsp;</dd>
+            <dt>Width:</dt><dd id="width"> &nbsp;</dd>
+            <dt>Height:</dt><dd id="height">&nbsp;</dd>
+            <dt>Color Depth:</dt><dd id="colorDepth"></dd>
+        </dl>
+    </div>
+    
+    <div id="button">
+        <a id="start" href="#" class="" onclick="iotbike();"><img alt="start" src="images/button-off.png" /></a>
+        <a id="stop" style="display:none;" href="#" class="" onclick="iotbike();"><img alt="start" src="images/button-on.png" /></a>
+    </div>
+    
+  </body>
+</html>

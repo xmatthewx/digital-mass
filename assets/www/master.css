@@ -1,0 +1,67 @@
+  body {
+    color:#666;
+    font-family:Helvetica;
+    font-size:72%;
+    line-height:1.5em;
+    margin:0;
+    border-top:1px solid #393939;
+    background:#222 none repeat scroll 0 0;
+    background:#bbb url(images/background.jpg);
+  }
+
+ 	
+  #stage.theme{
+    padding-top:3px;
+  }
+
+  /* Definition List */
+  #stage.theme > div > dl{
+  	padding-top:10px;
+  	clear:both;
+  	margin:0;
+  	list-style-type:none;
+  	padding-left:10px;
+  	overflow:auto;
+  }
+
+  #stage.theme > div  > dl > dt{
+  	font-weight:bold;
+  	float:left; 
+  	width:25%;
+  	margin-left:5px;
+  	color:#bbb;
+  }
+
+  #stage.theme > div  > dl > dd{
+  	/*
+  	width:45px;
+  	float:left;
+  	*/
+  	color:#fff;
+  	font-weight:bold;
+  }
+
+
+
+  #stage.theme > div#button { 
+    height:150px;
+    width:150px;
+    margin:0 auto;
+    position:absolute;
+    bottom:30px;
+    left:85px;
+    }
+
+  #stage.theme > a#start:active {
+    border:0;
+}
+
+  #stage.theme > #thedata {
+    margin:10px;
+    padding:10px 5px 20px;
+    border:1px solid white;
+    border-color:rgba(255,255,255,0.5);
+    background:rgb(0,0,0);
+    background:rgba(0,0,0,0.4);
+}
+
