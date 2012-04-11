@@ -1,14 +1,14 @@
 
 function iotbike() {
 
+    // js below
+    toggleUI();
+    check_net_connection();
+    bikeLocation();
+
     // js in main.js
     toggleAccel(); 
     //toggleCompass();
-    
-    // js below
-    check_net_connection();
-    bikeLocation();
-    toggleUI();
 
 }
 
