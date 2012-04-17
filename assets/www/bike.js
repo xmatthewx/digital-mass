@@ -1,16 +1,40 @@
+var counter=0;
+var timer;
+var timer_is_on=0;
+
+
+
 
 function iotbike() {
 
-    // js below
-    toggleUI();
-    check_net_connection();
-    bikeLocation();
+    //*** js below
+        toggleUI();
+        doTimer();
+        //  check_net_connection();
 
-    // js in main.js
-    toggleAccel(); 
-    //toggleCompass();
-
+    //*** js in main.js
+        // toggleAccel(); 
+        // toggleCompass();
+    
 }
+
+
+function doTimer() {
+    if (!timer_is_on) {
+      timer_is_on=1;
+      // timedCount();
+      bikeLocation();
+    }
+}
+
+function timedCount() {
+    document.getElementById('counter').innerHTML=counter;
+    counter=counter+1;
+    timer=setTimeout("timedCount()",1000);
+}
+
+
+
 
 
 function toggleUI() {
@@ -38,6 +62,8 @@ function toggleUI() {
     
 }
 
+
+
 function bikeLocation() {
     
     /*
@@ -47,14 +73,20 @@ function bikeLocation() {
         document.getElementById('longi').innerHTML = roundNumber(p.longi);
     }
     */
+    
+    /*for (int i = 0; i < 500; i ++){
+        
+        getBikeLocation();
+        
+    }*/
 
+    
     var getBikeLocation = function() {
         
         var suc = function(p) {
         
             var lati = p.coords.latitude;
             var longi = p.coords.longitude;
-            // alert(lati  + " " +  longi);
             
             document.getElementById('lati').innerHTML = lati;
             document.getElementById('longi').innerHTML = longi;
@@ -72,7 +104,10 @@ function bikeLocation() {
         navigator.geolocation.getCurrentPosition(suc, locFail);
     };
 
-    getBikeLocation();
+    getBikeLocation();    
+    document.getElementById('counter').innerHTML=counter;
+    counter=counter+1;
+    timer=setTimeout("bikeLocation()",5000);    
     
 }
 
