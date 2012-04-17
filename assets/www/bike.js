@@ -3,38 +3,24 @@ var timer;
 var timer_is_on=0;
 
 
-
-
 function iotbike() {
-
     //*** js below
         toggleUI();
-        doTimer();
-        //  check_net_connection();
+        gpsTimer();
+        check_net_connection();
 
     //*** js in main.js
         // toggleAccel(); 
-        // toggleCompass();
-    
+        // toggleCompass();   
 }
 
 
-function doTimer() {
+function gpsTimer() {
     if (!timer_is_on) {
       timer_is_on=1;
-      // timedCount();
       bikeLocation();
     }
 }
-
-function timedCount() {
-    document.getElementById('counter').innerHTML=counter;
-    counter=counter+1;
-    timer=setTimeout("timedCount()",1000);
-}
-
-
-
 
 
 function toggleUI() {
@@ -66,21 +52,6 @@ function toggleUI() {
 
 function bikeLocation() {
     
-    /*
-    // not currently in use
-    function updateLocation(p) {
-        document.getElementById('lati').innerHTML = roundNumber(p.lati);
-        document.getElementById('longi').innerHTML = roundNumber(p.longi);
-    }
-    */
-    
-    /*for (int i = 0; i < 500; i ++){
-        
-        getBikeLocation();
-        
-    }*/
-
-    
     var getBikeLocation = function() {
         
         var suc = function(p) {
@@ -90,13 +61,6 @@ function bikeLocation() {
             
             document.getElementById('lati').innerHTML = lati;
             document.getElementById('longi').innerHTML = longi;
-            /*
-                // instead, pass values along
-                updateLocation({
-                    lati : "",
-                    longi : ""
-                });
-            */
         
         };
         var locFail = function() {
@@ -123,7 +87,6 @@ function check_net_connection() {
     states[Connection.CELL_4G]  = '4G';
     states[Connection.NONE]     = 'No connection';
 
-    // confirm('Connection type:\n ' + states[networkState]);
     var net_connect = states[networkState];
     document.getElementById('connection').innerHTML = net_connect;
     
