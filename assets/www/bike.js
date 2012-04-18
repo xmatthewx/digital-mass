@@ -19,6 +19,7 @@ function gpsTimer() {
     if (!timer_is_on) {
       timer_is_on=1;
       bikeLocation();
+      //fakeLocation(); // use for off-phone browser dev
     }
 }
 
@@ -49,6 +50,17 @@ function toggleUI() {
 }
 
 
+
+function fakeLocation() {
+    
+    document.getElementById('lati').innerHTML = Math.random();
+    document.getElementById('longi').innerHTML = Math.random();
+
+    document.getElementById('counter').innerHTML=counter;
+    counter=counter+1;
+    timer=setTimeout("fakeLocation()",5000);    
+    
+}
 
 function bikeLocation() {
     
