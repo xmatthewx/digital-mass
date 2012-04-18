@@ -8,12 +8,14 @@
   
       <script type="text/javascript" charset="utf-8" src="cordova-1.5.0.js"></script>
       <script type="text/javascript" charset="utf-8" src="main.js"></script>
-    <!-- disable main.js and cordova-x.x.x.js for off-phone dev    -->  
+    <!--
+     disable main.js and cordova-x.x.x.js for off-phone dev    -->  
       <script type="text/javascript" charset="utf-8" src="bike.js"></script>
 
 </head>
 <body onload="init();" id="stage" class="theme">
     
+    <p id="status"></p>
     
     <div id="thedata">
         <dl id="ridedata" style="display:none;" >
@@ -22,6 +24,8 @@
           <dt>Long:</dt><dd id="longi">-</dd>
       	  <dt>Compass:</dt><dd id="h">-</dd>
       	  <br />
+          <dt>DB status:</dt><dd id="dbstatus">&nbsp;</dd>
+          <br />
           <dt>X:</dt><dd id="x">&nbsp;</dd>
           <dt>Y:</dt><dd id="y">&nbsp;</dd>
           <dt>Z:</dt><dd id="z">&nbsp;</dd>
