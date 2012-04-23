@@ -9,17 +9,17 @@ var use_dummy_data = false; // true for off-phone browser dev
 var counter=0;
 var timer;
 var timer_is_on=0;
-var gpsInterval = 4000; // milliseconds
+var gpsInterval = 3500; // milliseconds
 
 // setup 
-var theUrl, sqlInsert, gpsTimestamp;
 var urlBase = "https://ideapublic.cartodb.com/api/v1/sql?api_key=";
 var cartoKey = "d1003f790f91855f9a72363ac887e14010974332"; 
-var userID = 11;
-var rideID = 1; // read from local storage
+var userID = 15;
+var rideID = 11; // read from local storage
 
 
 // set up local db
+if (drop_local_db) { dbDrop(); } // clear local storage
 var db = openDatabase('bikedb', '1.0', 'bikedb', 2 * 1024);
 db.transaction(function (tx) {
   tx.executeSql('CREATE TABLE IF NOT EXISTS bikedb (dbkey INTEGER PRIMARY KEY, rideid INTEGER, count INTEGER, lati INTEGER, longi INTEGER)');  
@@ -30,14 +30,13 @@ db.transaction(function (tx) {
 // triggered by user
 function iotbike() {
     
-    if (drop_local_db) { dbDrop(); } // clear local storage
-    
     rideID += 1; // should be read from carto or local storage
     // rideCheck(); // can't access local storage for max rideID
     
     toggleUI();
     if (timer_is_on ==0) {
         timer_is_on=1;
+        console.log("rideID: " + rideID);
         if (!use_dummy_data) { bikeLocation(); }
         else { fakeLocation(); }  
     }
@@ -52,6 +51,8 @@ function iotbike() {
 function iotOff() {
     toggleUI();
     timer_is_on=0;
+    console.log("rideID: " + rideID);
+    cartodbLine(rideID);
     var thiscount = counter + 1;
     alert("Ride #" + rideID + " is complete with " + thiscount + " points.");
     counter = 0;
@@ -65,29 +66,41 @@ function cartodbTrace(rideID,count,lati,longi) {
     if (write_to_carto) { 
 
         traceID = count;
-        gpsTimestamp ="now()";
-        sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
-        theUrl = urlBase + cartoKey + sqlInsert;
+        var gpsTimestamp ="now()";
+        var sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,trace_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ traceID +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
+        var theUrl = urlBase + cartoKey + sqlInsert;
 
-        // alert("Ride.Point: " + rideID + "." + counter);
-    
+        console.log("RideID, Trace: " + rideID + ", " + counter);
+
+        var xmlHttp = null;
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false );
+        xmlHttp.send( null );
+        // console.log(xmlHttp.responseText);
+        // return xmlHttp.responseText;
+
+    }
+}
+
+function cartodbLine(rideID) {
+    //CREATE THE RIDE LINE (WHEN DONE)
+
+    if (write_to_carto) { 
+        console.log("rideID for line: " + rideID);
+
+        var sqlInsert = "&q=INSERT INTO rides(the_geom,user_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,1 as user_id FROM (SELECT the_geom FROM gps_traces WHERE user_id="+ userID +" AND ride_id="+ rideID +") as traces";
+        var theUrl = urlBase + cartoKey + sqlInsert;
+        console.log(theUrl);
+
         var xmlHttp = null;
         xmlHttp = new XMLHttpRequest();
         xmlHttp.open( "GET", theUrl, false );
         xmlHttp.send( null );
         console.log(xmlHttp.responseText);
         // return xmlHttp.responseText;
-
+        
     }
-}
 
-function cartodbLine(thecount,lati,longi) {
-/*
-    //CREATE THE RIDE LINE (WHEN DONE)
-
-    //INSERT INTO rides(the_geom,user_id)
-    //SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,1 as user_id FROM (SELECT the_geom FROM gps_traces WHERE ride_id=1) as traces
-*/
 }
 
 function dbWrite(rideid,thecount,lati,longi) {
@@ -176,10 +189,10 @@ function fakeLocation() {
 
     if (timer_is_on==1) {
     
-        var lati = 40 + randX + (randA * counter) - (Math.random()/200);
-        var longi = -77 + randY + (randB * counter) - (Math.random()/200);
-        // 40.879533 PA
-        //-77.547233 PA
+        var lati = 40.3 + randX + (randA * counter) - (Math.random()/200);
+        var longi = -74.5 + randY + (randB * counter) - (Math.random()/200);
+        // -77.5, 40.8 PA
+        // -74.0, 40.7 NYC
 
         if (write_local_db) {
             dbWrite(rideID,counter,lati,longi);
