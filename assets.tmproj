@@ -7,6 +7,12 @@
 	<key>documents</key>
 	<array>
 		<dict>
+			<key>filename</key>
+			<string>../../../htdocs/readme git.txt</string>
+			<key>lastUsed</key>
+			<date>2012-04-22T22:48:33Z</date>
+		</dict>
+		<dict>
 			<key>expanded</key>
 			<true/>
 			<key>name</key>
@@ -102,14 +108,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>18</integer>
+				<integer>0</integer>
 				<key>line</key>
-				<integer>14</integer>
+				<integer>47</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>10</integer>
+			<integer>27</integer>
 		</dict>
 		<key>assets/www/cordova-1.5.0.js</key>
 		<dict>
@@ -146,14 +152,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>0</integer>
+				<integer>16</integer>
 				<key>line</key>
-				<integer>11</integer>
+				<integer>32</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>0</integer>
+			<integer>8</integer>
 		</dict>
 		<key>assets/www/main.js</key>
 		<dict>
@@ -231,11 +237,10 @@
 		<string>assets/www/main.js</string>
 		<string>assets/www/index.html</string>
 		<string>assets/www/bike.js</string>
-		<string>assets/www/cordova-1.5.0.js</string>
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<true/>
 	<key>windowFrame</key>
-	<string>{{656, 20}, {770, 858}}</string>
+	<string>{{414, 20}, {991, 858}}</string>
 </dict>
 </plist>

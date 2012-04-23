@@ -1,14 +1,22 @@
-// set up persistent location check
+// dev options
+var write_to_carto = true;
+var write_local_db = false;
+var drop_local_db = false; // clear local storage
+var use_dummy_data = false; // true for off-phone browser dev
+
+
+// setup persistent location check
 var counter=0;
 var timer;
 var timer_is_on=0;
-var write_to_carto = true;
+var gpsInterval = 4000; // milliseconds
 
-var theUrl, urlBase, cartoKey, userID, rideID, sqlInsert, gpsTimestamp;
-urlBase = "https://ideapublic.cartodb.com/api/v1/sql?api_key=";
-cartoKey = "d1003f790f91855f9a72363ac887e14010974332"; 
-userID = 10;
-rideID = 100; // read from local storage
+// setup 
+var theUrl, sqlInsert, gpsTimestamp;
+var urlBase = "https://ideapublic.cartodb.com/api/v1/sql?api_key=";
+var cartoKey = "d1003f790f91855f9a72363ac887e14010974332"; 
+var userID = 11;
+var rideID = 1; // read from local storage
 
 
 // set up local db
@@ -19,15 +27,20 @@ db.transaction(function (tx) {
 });
 
 
+// triggered by user
 function iotbike() {
     
-    //dbDrop(); // clear local storage
+    if (drop_local_db) { dbDrop(); } // clear local storage
     
     rideID += 1; // should be read from carto or local storage
-    // rideCheck(); // can't access local store for max rideID
+    // rideCheck(); // can't access local storage for max rideID
     
     toggleUI();
-    gpsTimer();
+    if (timer_is_on ==0) {
+        timer_is_on=1;
+        if (!use_dummy_data) { bikeLocation(); }
+        else { fakeLocation(); }  
+    }
 
     //*** js in main.js
         // toggleAccel(); 
@@ -37,24 +50,12 @@ function iotbike() {
 
 
 function iotOff() {
-
     toggleUI();
     timer_is_on=0;
     var thiscount = counter + 1;
     alert("Ride #" + rideID + " is complete with " + thiscount + " points.");
     counter = 0;
-
 }
-
-
-function gpsTimer() {
-    if (timer_is_on ==0) {
-      timer_is_on=1;
-      //bikeLocation(); // use for on-phone gps
-      fakeLocation(); // use for off-phone browser dev
-    }
-}
-
 
 
 function cartodbTrace(rideID,count,lati,longi) {
@@ -180,8 +181,10 @@ function fakeLocation() {
         // 40.879533 PA
         //-77.547233 PA
 
-        // dbWrite(rideID,counter,lati,longi);
-        // dbStatus();
+        if (write_local_db) {
+            dbWrite(rideID,counter,lati,longi);
+            dbStatus();
+        }
         
         cartodbTrace(rideID,counter,lati,longi);
     
@@ -190,17 +193,16 @@ function fakeLocation() {
         document.getElementById('counter').innerHTML=counter;
 
         counter=counter+1;
-        timer=setTimeout("fakeLocation()",2000);    
+        timer=setTimeout("fakeLocation()",gpsInterval);    
     }
     else { ; }
 }
 
+
 function bikeLocation() {
     
     if (timer_is_on==1) {
-    
         var getBikeLocation = function() {
-        
             var geoSuccess = function(p) {
         
                 var lati = p.coords.latitude;
@@ -226,7 +228,6 @@ function bikeLocation() {
         timer=setTimeout("bikeLocation()",5000);    
 
     }
-    
 }
 
 
