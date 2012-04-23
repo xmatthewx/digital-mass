@@ -2,18 +2,19 @@
 var counter=0;
 var timer;
 var timer_is_on=0;
+var write_to_carto = true;
 
 var theUrl, urlBase, cartoKey, userID, rideID, sqlInsert, gpsTimestamp;
 urlBase = "https://ideapublic.cartodb.com/api/v1/sql?api_key=";
 cartoKey = "d1003f790f91855f9a72363ac887e14010974332"; 
-userID = "9";
-rideID = "100"; // read from local storage
+userID = 10;
+rideID = 100; // read from local storage
 
 
 // set up local db
 var db = openDatabase('bikedb', '1.0', 'bikedb', 2 * 1024);
 db.transaction(function (tx) {
-  tx.executeSql('CREATE TABLE IF NOT EXISTS bikedb (dbkey INTEGER PRIMARY KEY, count TEXT, lati TEXT, longi TEXT)');  
+  tx.executeSql('CREATE TABLE IF NOT EXISTS bikedb (dbkey INTEGER PRIMARY KEY, rideid INTEGER, count INTEGER, lati INTEGER, longi INTEGER)');  
   
 });
 
@@ -23,8 +24,8 @@ function iotbike() {
     //dbDrop(); // clear local storage
     
     rideID += 1; // should be read from carto or local storage
+    // rideCheck(); // can't access local store for max rideID
     
-    dbWrite();
     toggleUI();
     gpsTimer();
 
@@ -49,36 +50,34 @@ function iotOff() {
 function gpsTimer() {
     if (timer_is_on ==0) {
       timer_is_on=1;
-      //bikeLocation();
+      //bikeLocation(); // use for on-phone gps
       fakeLocation(); // use for off-phone browser dev
     }
 }
 
 
-function dbWrite(thecount,lati,longi) {
-    db.transaction(function (tx) {
-        //tx.executeSql('INSERT INTO bikedb (count, lati, longi) VALUES ("'+ counter + '", "'+ lati +'", "'+ longi +'")' );
-        tx.executeSql('INSERT INTO bikedb (count, lati, longi) VALUES (?,?,?);',[thecount,lati,longi] );
-    });
-}
 
 function cartodbTrace(rideID,count,lati,longi) {
     //INSERT A GPS TRACE
     //var theUrl = "https://ideapublic.cartodb.com/api/v1/sql?api_key=d1003f790f91855f9a72363ac887e14010974332&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES(now(),8,34,ST_SetSrid(st_makepoint(-74.06212,46.675573),4326))"
 
-    traceID = count;
-    gpsTimestamp ="now()";
-    sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
-    theUrl = urlBase + cartoKey + sqlInsert;
+    if (write_to_carto) { 
 
-    // alert("Ride.Point: " + rideID + "." + counter);
+        traceID = count;
+        gpsTimestamp ="now()";
+        sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
+        theUrl = urlBase + cartoKey + sqlInsert;
+
+        // alert("Ride.Point: " + rideID + "." + counter);
     
-    var xmlHttp = null;
-    xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "GET", theUrl, false );
-    xmlHttp.send( null );
-    console.log(xmlHttp.responseText);
-    // return xmlHttp.responseText;
+        var xmlHttp = null;
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false );
+        xmlHttp.send( null );
+        console.log(xmlHttp.responseText);
+        // return xmlHttp.responseText;
+
+    }
 }
 
 function cartodbLine(thecount,lati,longi) {
@@ -89,6 +88,32 @@ function cartodbLine(thecount,lati,longi) {
     //SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,1 as user_id FROM (SELECT the_geom FROM gps_traces WHERE ride_id=1) as traces
 */
 }
+
+function dbWrite(rideid,thecount,lati,longi) {
+    db.transaction(function (tx) {
+        //tx.executeSql('INSERT INTO bikedb (count, lati, longi) VALUES ("'+ counter + '", "'+ lati +'", "'+ longi +'")' );
+        tx.executeSql('INSERT INTO bikedb (rideid, count, lati, longi) VALUES (?,?,?,?);',[rideid,thecount,lati,longi] );
+    });
+}
+
+// SELECT MAX(rideid) FROM bikedb;
+function rideCheck() {
+    db.transaction(function (tx) {
+        //tx.executeSql('SELECT MAX(rideid) AS Biggest FROM bikedb', [], function (tx, results) {
+        tx.executeSql('SELECT MAX(rideid) FROM bikedb', [], function (tx, results) {
+            var themax = results.rows.item(0);
+            //var rideMAX = results.rows.item(0).data(row.themax);
+            var rideMAX = themax['rideid'];   
+            alert(rideMAX);
+            // document.querySelector('#dbstatus').innerHTML = 'Entries: ' + results.rows.item(results.rows.length).data(row.id); 
+        }, function (tx, err) {
+            document.querySelector('#dbstatus').innerHTML += 'Error: <em>' + err.message + '</em>';
+            document.querySelector('#dbstatus').className = 'error';
+        });
+    });
+}
+
+
 
 function dbStatus() {
     db.transaction(function (tx) {
@@ -155,9 +180,10 @@ function fakeLocation() {
         // 40.879533 PA
         //-77.547233 PA
 
-        dbWrite(counter,lati,longi);
-        dbStatus();
-        cartodbTrace(rideID,counter,lati,longi)
+        // dbWrite(rideID,counter,lati,longi);
+        // dbStatus();
+        
+        cartodbTrace(rideID,counter,lati,longi);
     
         document.getElementById('lati').innerHTML = lati;
         document.getElementById('longi').innerHTML = longi;
@@ -171,29 +197,39 @@ function fakeLocation() {
 
 function bikeLocation() {
     
-    var getBikeLocation = function() {
+    if (timer_is_on==1) {
+    
+        var getBikeLocation = function() {
         
-        var suc = function(p) {
+            var geoSuccess = function(p) {
         
-            var lati = p.coords.latitude;
-            var longi = p.coords.longitude;
+                var lati = p.coords.latitude;
+                var longi = p.coords.longitude;
             
-            dbWrite(counter,lati,longi);
-            document.getElementById('lati').innerHTML = lati;
-            document.getElementById('longi').innerHTML = longi;
+                dbWrite(counter,lati,longi);
+                dbStatus();
+                cartodbTrace(rideID,counter,lati,longi)
+                
+                document.getElementById('lati').innerHTML = lati;
+                document.getElementById('longi').innerHTML = longi;
+                document.getElementById('counter').innerHTML=counter;
         
+            };
+            var geoFail = function() {
+                // write failure to cartoDB ??
+            };
+            navigator.geolocation.getCurrentPosition(geoSuccess, geoFail);
         };
-        var locFail = function() {
-        };
-        navigator.geolocation.getCurrentPosition(suc, locFail);
-    };
 
-    getBikeLocation();    
-    document.getElementById('counter').innerHTML=counter;
-    counter=counter+1;
-    timer=setTimeout("bikeLocation()",5000);    
+        getBikeLocation();    
+        counter=counter+1; // increment here or on success?
+        timer=setTimeout("bikeLocation()",5000);    
+
+    }
     
 }
+
+
 
 function check_net_connection() {
     var networkState = navigator.network.connection.type;
