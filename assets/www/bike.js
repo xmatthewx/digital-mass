@@ -2,11 +2,11 @@
  * Development Options
  */
 
-var write_to_carto = false;
+var write_to_carto = true;
 var write_local_db = true;
 var dropadd_local_db = true; // clear local DB
 var reset_rideNum = false; // clear localStorage
-var use_dummy_data = true; // true for off-phone browser dev
+var use_dummy_data = false; // true for off-phone browser dev
 
 
 /******************************* 
@@ -18,10 +18,12 @@ var urlBase = "https://ideapublic.cartodb.com/api/v1/sql?api_key=";
 var cartoKey = "d1003f790f91855f9a72363ac887e14010974332"; 
 
 // setup ride vars
-var gpsInterval = 3500; // milliseconds
+var gpsInterval = 3000; // milliseconds
+var startLat, startLong, endLat, endLong; // used for rough distance
 var userID = 17;
 var rideID; // localStorage.rideNum
 var counter=0;
+var startTime, endTime;
 var timer;
 var timer_is_on=0;
 
@@ -36,7 +38,6 @@ if ( !localStorage.getItem('rideNum') ) {
     localStorage.setItem('rideNum',0);
 }
 rideID = Number(localStorage.rideNum); // convert, stored as string.
-console.log("previous ride: " + rideID ); 
 
 
 // set up local db
@@ -52,37 +53,48 @@ else { init_db(); }
 // start ride: triggered by user
 function iotbike() {
 
-    rideID = rideID + 1;
-    localStorage.setItem('rideNum',rideID);
-    console.log("rideNum: " + rideID);
-
-    toggleUI();
-
     if (timer_is_on == 0) {
         timer_is_on=1;
-        console.log("rideID " + rideID +" started.");
+        toggleUI();
+
+        rideID = rideID + 1;
+        localStorage.setItem('rideNum',rideID);
+        feedback(); // could be run on CartoDB xmlHttp.responseText
+
+        startTime = new Date();
+        startTimer();
+        console.log("rideID " + rideID +" started at " + startTime.toLocaleTimeString() );
+
         if (!use_dummy_data) { bikeLocation(); }
         else { fakeLocation(); }  
+
+        //*** js in main.js
+            // toggleAccel(); 
+            // toggleCompass();   
+            // check_net_connection();
+
     }
 
-    //*** js in main.js
-        // toggleAccel(); 
-        // toggleCompass();   
-        // check_net_connection();
 }
 
 // stop ride: triggered by user
 function iotOff() {
-    toggleUI();
     timer_is_on=0;
-    console.log("rideID " + rideID +" complete with " + counter +" points.");
+    toggleUI();
+    endTime = new Date();
+    var elapsed = Math.round( (endTime - startTime)/1000 );
+    
+    var startMinutes = startTime.getMinutes();
+    var endMinutes = endTime.getMinutes();
+    
+    console.log("rideID " + rideID +" complete with " + counter +" points in " + elapsed + " seconds.");
+    
     cartodbLine(rideID);
     // could clear local DB if cartodbLine returns ok
 
-
     alert("Ride #" + rideID + " is complete with " + counter + " points.");
     counter = 0;
-
+    //rideCheck();
 }
 
 
@@ -97,10 +109,15 @@ function toggleUI() {
     var stopbutton = document.getElementById('stop');
     var data = document.getElementById('ridedata');
     var hardware = document.getElementById('hardware');
+    var clock = document.getElementById('time');
+    var maplink = document.getElementById('maplink');
 
     if ( startbutton.style.display == "none" ) { 
         startbutton.style.display = "block";
-        stopbutton.style.display = "none";        
+        stopbutton.style.display = "none";  
+        maplink.style.display = "block";
+        clock.style.color = "#aaa";
+        
         //data.style.display = "none";
         //hardware.style.display = "block";
     }
@@ -109,16 +126,16 @@ function toggleUI() {
         stopbutton.style.display = "block";        
         data.style.display = "block";
         hardware.style.display = "none";    
+        maplink.style.display = "none";
+        clock.style.color = "#fff";
     }
     
 }
 
-
-function feedback( rideID,counter ) {
-    
-    document.getElementById('ride-number').innerHTML = rideID;
-    document.getElementById('point-count').innerHTML = counter;
-
+// data to UI
+// could be run on CartoDB xmlHttp.responseText
+function feedback() {    
+    document.getElementById('ride-number').innerHTML = "Ride #" + rideID;
 }
 
 /******************************* 
@@ -138,16 +155,20 @@ function fakeLocation() {
     
         var lati = 40.3 + randX + (randA * counter) - (Math.random()/200);
         var longi = -74.5 + randY + (randB * counter) - (Math.random()/200);
-        // -77.5, 40.8 PA
         // -74.0, 40.7 NYC
 
         dbWrite(rideID,counter,lati,longi);
         cartodbTrace(rideID,counter,lati,longi);
-        feedback(rideID,counter);
+
+        // grab location to calc distance
+        if ( counter == 0 ) { 
+            startLat = lati;
+            startLong = longi;
+            // console.log(startLat,startLong);
+            }
+        // rideDistance(startLat,startLong,lati,longi);
     
-        document.getElementById('lati').innerHTML = lati;
-        document.getElementById('longi').innerHTML = longi;
-        document.getElementById('counter').innerHTML=counter;
+        // console.log("point #" + counter + " lati:" + lati + " longi:" + longi );
 
         counter=counter+1;
         timer=setTimeout("fakeLocation()",gpsInterval);    
@@ -225,7 +246,7 @@ function cartodbTrace(rideID,count,lati,longi) {
         xmlHttp.open( "GET", theUrl, false );
         xmlHttp.send( null );
         if (xmlHttp.responseText) { 
-            console.log("rideID:" + rideID + ", trace:" + counter); 
+            // console.log("rideID:" + rideID + ", trace:" + counter); 
             }
         else { console.log("Trace to Carto failed: " + counter); }
         // console.log("cartoDB response: " + xmlHttp.responseText);
@@ -307,11 +328,12 @@ function dbWrite(rideid,thecount,lati,longi) {
 }
 
 // check ride data
+// not currently in use
 // could be used to confirm localStorage.rideNum
 // could be used to estimate elapsed time & ride distance
 function rideCheck() {
     db.transaction(function (tx) {
-        tx.executeSql('SELECT rideid FROM bikedb ORDER BY rideid DESC', [], function (tx, results) {
+        tx.executeSql('SELECT * FROM bikedb ORDER BY rideid DESC', [], function (tx, results) {
             var themax = results.rows.item(0).rideid;
             console.log("last ride: ",themax);
         }, function (tx, err) {
@@ -321,3 +343,47 @@ function rideCheck() {
 }
 
 
+
+/******************************* 
+ * Distance
+ * http://www.movable-type.co.uk/scripts/latlong.html
+ */
+
+function rideDistance(lat1,lon1,lat2,lon2) {    
+
+    var R = 6371; // km
+    var d = Math.acos(Math.sin(lat1)*Math.sin(lat2) + Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1)) * R;
+    console.log("distance: " + d);
+
+}
+
+/******************************* 
+ * Elapsed Timer
+ */
+
+
+function startTimer() {
+    var today=new Date();
+    var elapsed = (today - startTime)/1000;
+
+    var days = 0;
+    var hours = Math.floor((elapsed - (days * 86400 ))/3600);
+    var minutes = Math.floor((elapsed - (days * 86400 ) - (hours *3600 ))/60);
+    var secs = Math.floor((elapsed - (days * 86400 ) - (hours *3600 ) - (minutes*60)));
+
+    // add a zero in front of numbers<10
+    minutes=checkTimer(minutes);
+    secs=checkTimer(secs);
+
+    if (timer_is_on==1) {
+        document.getElementById('time').innerHTML=hours+":"+minutes+":"+secs;
+        t=setTimeout('startTimer()',500);
+    }
+}
+
+function checkTimer(i) {
+    if (i<10) {
+        i="0" + i;
+    }
+    return i;
+}

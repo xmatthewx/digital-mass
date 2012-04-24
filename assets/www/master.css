@@ -1,21 +1,21 @@
-  body {
-    color:#666;
-    font-family:Helvetica;
-    font-size:72%;
-    line-height:1.5em;
-    margin:0;
-    border-top:1px solid #393939;
-    background:#222 none repeat scroll 0 0;
-    background:#bbb url(images/background.jpg);
-  }
+body {
+color:#666;
+font-family:Helvetica;
+font-size:72%;
+line-height:1.5em;
+margin:0;
+border-top:1px solid #393939;
+background:#222 none repeat scroll 0 0;
+background:#bbb url(images/background.jpg);
+}
 
- 	
-  #stage.theme{
-    padding-top:3px;
-  }
+	
+#stage.theme{
+padding-top:3px;
+}
 
 
-#stage.theme > #stats {
+#stats {
   margin:10px;
   padding:10px 5px 20px;
   border:1px solid white;
@@ -25,7 +25,7 @@
 }
 
 
-#stage.theme > #stats li {
+li {
     font-size:3em;
     line-height:1.2em;
     list-style-type:none;
@@ -34,6 +34,26 @@
     font-weight:bold;
 }
 
+
+#time {
+    color:#aaa;
+}
+
+#distance, #maplink {
+    display:block;
+}
+#maplink a {
+    display:inline;
+    color:rgba(0,0,0,0.8);
+    background:rgba(255,255,255,0.6);
+    padding:2px 8px;
+    font-size:.5em;
+    text-decoration:none;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+}
+#maplink a:hover, #maplink a:active { background:rgba(255,255,255,0.9) }
 
 
   /* Definition List */
