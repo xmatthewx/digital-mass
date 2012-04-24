@@ -2,9 +2,10 @@
  * Development Options
  */
 
-var write_to_carto = true;
+var write_to_carto = false;
 var write_local_db = true;
-var dropadd_local_db = true; // clear local storage
+var dropadd_local_db = true; // clear local DB
+var reset_rideNum = false; // clear localStorage
 var use_dummy_data = true; // true for off-phone browser dev
 
 
@@ -18,11 +19,25 @@ var cartoKey = "d1003f790f91855f9a72363ac887e14010974332";
 
 // setup ride vars
 var gpsInterval = 3500; // milliseconds
-var userID = 16;
-var rideID = 0; // should get this from local storage
+var userID = 17;
+var rideID; // localStorage.rideNum
 var counter=0;
 var timer;
 var timer_is_on=0;
+
+
+// set up local storage
+if (reset_rideNum) { 
+    console.log("clear localStorage"); 
+    localStorage.removeItem('rideNum'); 
+}
+if ( !localStorage.getItem('rideNum') ) { 
+    console.log("init localStorage"); 
+    localStorage.setItem('rideNum',0);
+}
+rideID = Number(localStorage.rideNum); // convert, stored as string.
+console.log("previous ride: " + rideID ); 
+
 
 // set up local db
 var db = openDatabase('bikedb', '1.0', 'bikedb', 2 * 1024);
@@ -36,11 +51,13 @@ else { init_db(); }
 
 // start ride: triggered by user
 function iotbike() {
-    
-    rideID += 1; // should be read from carto or local storage
-    // rideCheck(); // can't access local storage for max rideID
-    
+
+    rideID = rideID + 1;
+    localStorage.setItem('rideNum',rideID);
+    console.log("rideNum: " + rideID);
+
     toggleUI();
+
     if (timer_is_on == 0) {
         timer_is_on=1;
         console.log("rideID " + rideID +" started.");
@@ -60,8 +77,12 @@ function iotOff() {
     timer_is_on=0;
     console.log("rideID " + rideID +" complete with " + counter +" points.");
     cartodbLine(rideID);
+    // could clear local DB if cartodbLine returns ok
+
+
     alert("Ride #" + rideID + " is complete with " + counter + " points.");
     counter = 0;
+
 }
 
 
@@ -93,6 +114,13 @@ function toggleUI() {
 }
 
 
+function feedback( rideID,counter ) {
+    
+    document.getElementById('ride-number').innerHTML = rideID;
+    document.getElementById('point-count').innerHTML = counter;
+
+}
+
 /******************************* 
  * User & Ride Data
  */
@@ -115,6 +143,7 @@ function fakeLocation() {
 
         dbWrite(rideID,counter,lati,longi);
         cartodbTrace(rideID,counter,lati,longi);
+        feedback(rideID,counter);
     
         document.getElementById('lati').innerHTML = lati;
         document.getElementById('longi').innerHTML = longi;
@@ -219,7 +248,10 @@ function cartodbLine(rideID) {
         xmlHttp.open( "GET", theUrl, false );
         xmlHttp.send( null );
         
-        if (xmlHttp.responseText) { console.log("Line written to Carto for RideID: " + rideID ); }
+        if (xmlHttp.responseText) { 
+            console.log("Line written to Carto for RideID: " + rideID ); 
+            // dbDrop(); // clear localDB
+            }
         else { console.log("Line in Carto failed for rideID: " + rideID ); }
         // console.log(theUrl);
         // console.log("cartoDB line response: " + xmlHttp.responseText);
@@ -239,17 +271,13 @@ function dbStatus() {
     db.transaction(function (tx) {
         tx.executeSql('SELECT * FROM bikedb', [], function (tx, results) {
             var dbtotal = results.rows.length;            
-            document.querySelector('#dbstatus').innerHTML = 'Entries: ' + dbtotal; 
-            // document.querySelector('#dbstatus').innerHTML = 'Entries: ' + results.rows.item(results.rows.length).data(row.id); 
         }, function (tx, err) {
-            document.querySelector('#dbstatus').innerHTML += 'Error: <em>' + err.message + '</em>';
-            document.querySelector('#dbstatus').className = 'error';
+            console.log("Error: "+ err.message);
         });
     });
 }
 
 function dbDrop() {
-    console.log("init drop");
     db.transaction(function (tx) {
         tx.executeSql('DROP TABLE bikedb');
         console.log("db dropped");
@@ -261,11 +289,10 @@ function dbDrop() {
 }
 
 function init_db() {
-    console.log("init db");
     db.transaction(function (tx) {
         tx.executeSql('CREATE TABLE IF NOT EXISTS bikedb (dbkey INTEGER PRIMARY KEY, userid INTEGER, rideid INTEGER, count INTEGER, lati INTEGER, longi INTEGER)');  
-        console.log("db created");
-    });    
+        console.log("db init");
+    });
 }
 
 function dbWrite(rideid,thecount,lati,longi) {
@@ -279,21 +306,16 @@ function dbWrite(rideid,thecount,lati,longi) {
     }
 }
 
-// attempting and failing to get ride id from local DB
-// local storage different??
-// SELECT MAX(rideid) FROM bikedb;
+// check ride data
+// could be used to confirm localStorage.rideNum
+// could be used to estimate elapsed time & ride distance
 function rideCheck() {
     db.transaction(function (tx) {
-        //tx.executeSql('SELECT MAX(rideid) AS Biggest FROM bikedb', [], function (tx, results) {
-        tx.executeSql('SELECT MAX(rideid) FROM bikedb', [], function (tx, results) {
-            var themax = results.rows.item(0);
-            //var rideMAX = results.rows.item(0).data(row.themax);
-            var rideMAX = themax['rideid'];   
-            alert(rideMAX);
-            // document.querySelector('#dbstatus').innerHTML = 'Entries: ' + results.rows.item(results.rows.length).data(row.id); 
+        tx.executeSql('SELECT rideid FROM bikedb ORDER BY rideid DESC', [], function (tx, results) {
+            var themax = results.rows.item(0).rideid;
+            console.log("last ride: ",themax);
         }, function (tx, err) {
-            document.querySelector('#dbstatus').innerHTML += 'Error: <em>' + err.message + '</em>';
-            document.querySelector('#dbstatus').className = 'error';
+            console.log( "rideCheck Error: " + err.message );
         });
     });
 }

@@ -12,13 +12,27 @@
      disable main.js and cordova-x.x.x.js for off-phone dev    -->  
       <script type="text/javascript" charset="utf-8" src="bike.js"></script>
 
+
+      <style>
+
+      #stats {}
+
+      </style>
+
 </head>
 <body onload="init();" id="stage" class="theme">
+
+    <div id="stats" >
+        <ul>
+            <li id="ride-number">5</li>
+            <li id="point-count">17</li>
+            <li id="time">00:04:17</li>
+            <li id="distance">0.3 miles</li>        
+        </ul>
+    </div>
     
-    <p id="status"></p>
-    
-    <div id="thedata">
-        <dl id="ridedata" style="display:none;" >
+    <div style="display:none;" id="thedata">
+        <dl id="ridedata" >
           <dt>Count:</dt><dd id="counter">-</dd>
           <dt>Lat:</dt><dd id="lati">-</dd>
           <dt>Long:</dt><dd id="longi">-</dd>

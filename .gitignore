@@ -4,6 +4,9 @@
 *.apk
 *.ap_
 
+# textmate project
+*.tmproj
+
 # files for the dex VM
 *.dex
 
