@@ -3,7 +3,7 @@
  */
 
 var write_to_carto = true;
-var write_local_db = true;
+var write_local_db = false;
 var dropadd_local_db = true; // clear local DB
 var reset_rideNum = false; // clear localStorage
 var use_dummy_data = false; // true for off-phone browser dev
@@ -37,6 +37,7 @@ if ( !localStorage.getItem('rideNum') ) {
     console.log("init localStorage"); 
     localStorage.setItem('rideNum',0);
 }
+localStorage.setItem('userID',userID);
 rideID = Number(localStorage.rideNum); // convert, stored as string.
 
 
@@ -45,6 +46,15 @@ var db = openDatabase('bikedb', '1.0', 'bikedb', 2 * 1024);
 if (dropadd_local_db) { dbDrop(); }
 else { init_db(); }
 
+
+
+function initmap() {
+    
+    var mapurl = "https://ideapublic.cartodb.com/tables/rides/embed_map?sql=SELECT%20*%20FROM%20rides%20where%20user_id%3D"+userID;
+    
+    document.getElementById('mapframe').src = mapurl;
+    
+}
 
 /******************************* 
  * User Actions
@@ -58,12 +68,13 @@ function iotbike() {
         toggleUI();
 
         rideID = rideID + 1;
-        localStorage.setItem('rideNum',rideID);
-        feedback(); // could be run on CartoDB xmlHttp.responseText
 
         startTime = new Date();
         startTimer();
         console.log("rideID " + rideID +" started at " + startTime.toLocaleTimeString() );
+
+        localStorage.setItem('rideNum',rideID);
+        feedback(); // could be run on CartoDB xmlHttp.responseText
 
         if (!use_dummy_data) { bikeLocation(); }
         else { fakeLocation(); }  
@@ -98,7 +109,6 @@ function iotOff() {
 }
 
 
-
 /******************************* 
  * Interface
  */
@@ -117,9 +127,6 @@ function toggleUI() {
         stopbutton.style.display = "none";  
         maplink.style.display = "block";
         clock.style.color = "#aaa";
-        
-        //data.style.display = "none";
-        //hardware.style.display = "block";
     }
     else {
         startbutton.style.display = "none";
@@ -136,6 +143,8 @@ function toggleUI() {
 // could be run on CartoDB xmlHttp.responseText
 function feedback() {    
     document.getElementById('ride-number').innerHTML = "Ride #" + rideID;
+    document.getElementById('background').innerHTML = "Data transmission log. User: " + userID + ". Ride: " + rideID + ". ";
+    
 }
 
 /******************************* 
@@ -159,6 +168,11 @@ function fakeLocation() {
 
         dbWrite(rideID,counter,lati,longi);
         cartodbTrace(rideID,counter,lati,longi);
+
+        document.getElementById('background').innerHTML += "Point: " + counter + ". ";
+        document.getElementById('background').innerHTML += "Lat: " + lati + ". ";
+        document.getElementById('background').innerHTML += "Long: " + longi + ". ";
+
 
         // grab location to calc distance
         if ( counter == 0 ) { 
@@ -188,11 +202,7 @@ function bikeLocation() {
             
                 dbWrite(counter,lati,longi);
                 cartodbTrace(rideID,counter,lati,longi);
-                
-                document.getElementById('lati').innerHTML = lati;
-                document.getElementById('longi').innerHTML = longi;
-                document.getElementById('counter').innerHTML=counter;
-        
+                        
             };
             var geoFail = function() {
                 // write failure to cartoDB ??
@@ -232,13 +242,12 @@ function check_net_connection() {
 // add point to CartoDB
 function cartodbTrace(rideID,count,lati,longi) {
     //INSERT A GPS TRACE
-    //var theUrl = "https://ideapublic.cartodb.com/api/v1/sql?api_key=d1003f790f91855f9a72363ac887e14010974332&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES(now(),8,34,ST_SetSrid(st_makepoint(-74.06212,46.675573),4326))"
+    //var theUrl = "https://ideapublic.cartodb.com/api/v1/sql?api_key=123123123123&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES(now(),8,34,ST_SetSrid(st_makepoint(-74.06212,46.675573),4326))"
 
     if (write_to_carto) { // if write_to_carto AND timer_is_on ??
 
-        traceID = count;
         var gpsTimestamp ="now()";
-        var sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,trace_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ traceID +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
+        var sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,trace_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ count +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
         var theUrl = urlBase + cartoKey + sqlInsert;
 
         var xmlHttp = null;
@@ -261,7 +270,7 @@ function cartodbLine(rideID) {
 
     if (write_to_carto) { 
 
-        var sqlInsert = "&q=INSERT INTO rides(the_geom,user_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,1 as user_id FROM (SELECT the_geom FROM gps_traces WHERE user_id="+ userID +" AND ride_id="+ rideID +") as traces";
+        var sqlInsert = "&q=INSERT INTO rides(the_geom,user_id,ride_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,"+ userID +" as user_id,"+ rideID +" as ride_id FROM (SELECT the_geom, user_id FROM gps_traces WHERE user_id="+ userID +" AND ride_id="+ rideID +") as traces";
         var theUrl = urlBase + cartoKey + sqlInsert;
 
         var xmlHttp = null;
@@ -318,6 +327,7 @@ function init_db() {
 
 function dbWrite(rideid,thecount,lati,longi) {
     if (write_local_db) {
+        //console.log("write to localDB");
         var userid = userID;
         db.transaction(function (tx) {
             //tx.executeSql('INSERT INTO bikedb (count, lati, longi) VALUES ("'+ counter + '", "'+ lati +'", "'+ longi +'")' );
@@ -351,8 +361,28 @@ function rideCheck() {
 
 function rideDistance(lat1,lon1,lat2,lon2) {    
 
-    var R = 6371; // km
-    var d = Math.acos(Math.sin(lat1)*Math.sin(lat2) + Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1)) * R;
+
+
+    function CalcDistanceBetween(lat1, lon1, lat2, lon2) {
+        //Radius of the earth in:  1.609344 miles,  6371 km  | var R = (6371 / 1.609344);
+        var R = 3958.7558657440545; // Radius of earth in Miles 
+        var dLat = toRad(lat2-lat1);
+        var dLon = toRad(lon2-lon1); 
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2); 
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        var d = R * c;
+        return d;
+    }
+
+    function toRad(Value) {
+        /** Converts numeric degrees to radians */
+        return Value * Math.PI / 180;
+    }   
+
+    //var R = 6371; // km
+    //var d = Math.acos(Math.sin(lat1)*Math.sin(lat2) + Math.cos(lat1)*Math.cos(lat2) * Math.cos(lon2-lon1)) * R;
     console.log("distance: " + d);
 
 }

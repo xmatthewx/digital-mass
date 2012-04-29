@@ -13,21 +13,21 @@
       <script type="text/javascript" charset="utf-8" src="bike.js"></script>
 
 
-      <style>
-
-      #stats {}
-
-      </style>
-
 </head>
 <body onload="init();" id="stage" class="theme">
-
-    <div id="stats" >
+    <div id="background">
+    </div>  
+    
+    <div class="stats" >
         <ul>
-            <li id="ride-number">Ride On!</li>
             <li id="time">0:00:00</li>
+            <li id="ride-number">Ready</li>
             <li id="distance">0.0 miles</li>
-            <li id="maplink"><a href="https://ideapublic.cartodb.com/tables/rides/embed_map">View Map</a></li>        
+        </ul>
+    </div>
+    <div id="maplink" >
+        <ul>
+            <li><a href="map.html">View Map</a></li>        
         </ul>
     </div>
     
@@ -58,7 +58,7 @@
             <dt>Color Depth:</dt><dd id="colorDepth"></dd>
         </dl>
     </div>
-    
+
     <div id="button">
         <a id="start" href="#" class="" onclick="iotbike();"><img alt="start" src="images/button-off.png" /></a>
         <a id="stop" style="display:none;" href="#" class="" onclick="iotOff();"><img alt="start" src="images/button-on.png" /></a>

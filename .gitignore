@@ -1,5 +1,8 @@
 # ANDROID / ECLIPSE
 
+# dev junk
+kilo/
+
 # built application files
 *.apk
 *.ap_
