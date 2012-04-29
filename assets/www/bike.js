@@ -6,7 +6,7 @@ var write_to_carto = false;
 var write_local_db = false;
 var dropadd_local_db = true; // clear local DB
 var reset_rideNum = false; // clear localStorage
-var use_dummy_data = false; // true for off-phone browser dev
+var use_dummy_data = true; // true for off-phone browser dev
 
 
 /******************************* 
@@ -168,11 +168,7 @@ function fakeLocation() {
 
         dbWrite(rideID,counter,lati,longi);
         cartodbTrace(rideID,counter,lati,longi);
-
-        document.getElementById('background').innerHTML += "Point: " + counter + ". ";
-        document.getElementById('background').innerHTML += "Lat: " + lati + ". ";
-        document.getElementById('background').innerHTML += "Long: " + longi + ". ";
-
+        openthedata(counter,lati,longi);
 
         // grab location to calc distance
         if ( counter == 0 ) { 
@@ -202,7 +198,8 @@ function bikeLocation() {
             
                 dbWrite(counter,lati,longi);
                 cartodbTrace(rideID,counter,lati,longi);
-                        
+                openthedata(counter,lati,longi);
+            
             };
             var geoFail = function() {
                 // write failure to cartoDB ??
@@ -216,6 +213,15 @@ function bikeLocation() {
 
     }
 }
+
+
+
+function openthedata(counter,lati,longi) {
+    document.getElementById('background').innerHTML += "Point: " + counter + ". ";
+    document.getElementById('background').innerHTML += "Lat: " + lati + ". ";
+    document.getElementById('background').innerHTML += "Long: " + longi + ". ";
+}
+
 
 // mobile connect status
 function check_net_connection() {
