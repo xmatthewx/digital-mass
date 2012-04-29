@@ -2,7 +2,7 @@
  * Development Options
  */
 
-var write_to_carto = true;
+var write_to_carto = false;
 var write_local_db = false;
 var dropadd_local_db = true; // clear local DB
 var reset_rideNum = false; // clear localStorage
