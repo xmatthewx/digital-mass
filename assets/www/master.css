@@ -173,7 +173,7 @@ a#start:active {
     background:rgba(255,255,255,0.3);
 }
 
-#maplink { display:none; }
+#maplink { display:block; }
 
 /******************************* 
  * Forms

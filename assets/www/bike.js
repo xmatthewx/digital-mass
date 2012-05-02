@@ -174,7 +174,9 @@ function feedback() {
 }
 
 function initmap() {
-    var mapurl = "https://ideapublic.cartodb.com/tables/rides/embed_map?sql=SELECT%20*%20FROM%20rides%20where%20username%3D"+username;    
+    username = localStorage.getItem('username');
+    
+    var mapurl = "https://ideapublic.cartodb.com/tables/rides/embed_map?sql=SELECT%20*%20FROM%20rides%20where%20username%3D'"+username +"'";    
     document.getElementById('mapframe').src = mapurl;
 }
 
