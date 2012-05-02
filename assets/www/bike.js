@@ -67,21 +67,6 @@ if (dropadd_local_db) { dbDrop(); }
 else { init_db(); }
 
 
-// clear lifetime distance
-if (reset_distLifetime) { 
-    console.log("clear lifetime distance"); 
-    localStorage.removeItem('distLifetime'); 
-}
-// check total distance
-function lifetimeDistance() {
-    if ( !localStorage.getItem('distLifetime') ) { 
-        console.log("init lifetime distance"); 
-        localStorage.setItem('distLifetime',0);
-    }
-    distLifetime = Number(localStorage.distLifetime); // convert, stored as string.
-    document.getElementById('dist-Lifetime').innerHTML = displayDistance(distLifetime);    
-}
-
 
 /******************************* 
  * User Actions
@@ -412,6 +397,23 @@ function rideCheck() {
  * Distance
  * calculate each interval & aggregate the ride
  */
+
+
+ // clear lifetime distance
+ if (reset_distLifetime) { 
+     console.log("clear lifetime distance"); 
+     localStorage.removeItem('distLifetime'); 
+ }
+ // check total distance
+ function lifetimeDistance() {
+     if ( !localStorage.getItem('distLifetime') ) { 
+         console.log("init lifetime distance"); 
+         localStorage.setItem('distLifetime',0);
+     }
+     distLifetime = Number(localStorage.distLifetime); // convert, stored as string.
+     document.getElementById('dist-Lifetime').innerHTML = displayDistance(distLifetime);    
+ }
+
 
 function rideDistance(lat1,lon1,lat2,lon2) {    
 
