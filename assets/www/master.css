@@ -151,7 +151,8 @@ div#button {
     width:150px;
     margin:0;
     margin-left:-75px;
-    bottom:30px;
+    margin-top:-75px;
+    top:75%;
     left:50%;
     }
 

@@ -2,7 +2,7 @@
  * Development Options
  */
 
-var write_to_carto = false;
+var write_to_carto = true;
 var write_local_db = true;
 var dropadd_local_db = true; // clear local DB
 var reset_rideNum = false; // clear localStorage
@@ -97,6 +97,8 @@ function iotbike() {
             // toggleAccel(); 
             // toggleCompass();   
             // check_net_connection();
+        
+        vibrate();
 
     }
 
@@ -124,8 +126,15 @@ function iotOff() {
 
     alert("Ride #" + rideID + " is complete with " + distRide + " meters.");
     counter = 0;
+    vibrate();
     //rideCheck();
 }
+
+
+var vibrate = function() {
+   // navigator.notification.vibrate(1);
+};
+
 
 
 /******************************* 
@@ -225,10 +234,23 @@ function bikeLocation() {
         
                 var lati = p.coords.latitude;
                 var longi = p.coords.longitude;
-            
-                dbWrite(counter,lati,longi);
+                
+                // grab location to calc distance
+                if ( counter == 0 ) { 
+                    startLat = lati;
+                    startLong = longi;
+                    distance = 0;
+                    distRide = 0;
+                    // console.log(startLat,startLong);
+                    }
+                 else {
+                     rideDistance(prevLat,prevLong,lati,longi);
+            		}
+
+                dbWrite(rideID,counter,lati,longi,distance,distRide);
                 cartodbTrace(rideID,counter,lati,longi);
-                openthedata(counter,lati,longi);
+                openthedata(counter,lati,longi,distance);
+
 
                 // could be used save data locally and then send when online:
                 // https://github.com/alexgibson/OfflineForm/blob/master/offlineData.js
@@ -242,7 +264,7 @@ function bikeLocation() {
 
         getBikeLocation();    
         counter=counter+1; // increment here or on success?
-        timer=setTimeout("bikeLocation()",5000);    
+        timer=setTimeout("bikeLocation()",gpsInterval);    
 
     }
 }
@@ -281,12 +303,11 @@ function check_net_connection() {
 // add point to CartoDB
 function cartodbTrace(rideID,count,lati,longi) {
     //INSERT A GPS TRACE
-    //var theUrl = "https://ideapublic.cartodb.com/api/v1/sql?api_key=123123123123&q=INSERT INTO gps_traces(gps_timestamp,ride_id,user_id,the_geom) VALUES(now(),8,34,ST_SetSrid(st_makepoint(-74.06212,46.675573),4326))"
 
     if (write_to_carto) { // if write_to_carto AND timer_is_on ??
 
         var gpsTimestamp ="now()";
-        var sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,trace_id,user_id,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ count +","+ userID +",ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
+        var sqlInsert ="&q=INSERT INTO gps_traces(gps_timestamp,ride_id,trace_id,username,the_geom) VALUES("+ gpsTimestamp +","+ rideID +","+ count +",'"+ username +"',ST_SetSrid(st_makepoint("+ longi +","+ lati +"),4326))";
         var theUrl = urlBase + cartoKey + sqlInsert;
 
         var xmlHttp = null;
@@ -309,7 +330,7 @@ function cartodbLine(rideID) {
 
     if (write_to_carto) { 
 
-        var sqlInsert = "&q=INSERT INTO rides(the_geom,user_id,ride_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,"+ userID +" as user_id,"+ rideID +" as ride_id FROM (SELECT the_geom, user_id FROM gps_traces WHERE user_id="+ userID +" AND ride_id="+ rideID +") as traces";
+        var sqlInsert = "&q=INSERT INTO rides(the_geom,username,ride_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,'"+ username +"' as user_id,"+ rideID +" as ride_id FROM (SELECT the_geom, user_id FROM gps_traces WHERE user_id="+ userID +" AND ride_id="+ rideID +") as traces";
         var theUrl = urlBase + cartoKey + sqlInsert;
 
         var xmlHttp = null;

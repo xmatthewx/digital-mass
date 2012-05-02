@@ -21,10 +21,6 @@ var beep = function() {
     navigator.notification.beep(2);
 };
 
-var vibrate = function() {
-    navigator.notification.vibrate(0);
-};
-
 function roundNumber(num) {
     var dec = 3;
     var result = Math.round(num * Math.pow(10, dec)) / Math.pow(10, dec);
