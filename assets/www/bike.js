@@ -3,11 +3,11 @@
  */
 
 var write_to_carto = true;
-var write_local_db = true;
-var dropadd_local_db = true; // clear local DB
+var write_local_db = false;
+var dropadd_local_db = false; // clear local DB
 var reset_rideNum = false; // clear localStorage
 var reset_distLifetime = false; // clear localStorage
-var use_dummy_data = true; // true for off-phone browser dev
+var use_dummy_data = false; // true for off-phone browser dev
 
 
 /******************************* 
@@ -19,7 +19,7 @@ var urlBase = "https://ideapublic.cartodb.com/api/v1/sql?api_key=";
 var cartoKey = "d1003f790f91855f9a72363ac887e14010974332"; 
 
 // setup ride vars
-var gpsInterval = 3000; // milliseconds
+var gpsInterval = 5000; // milliseconds
 var startLat, startLong,prevLat, prevLong; // used for rough distance
 var distance, distLifetime, distRide = 0;
 var userID = 17;
@@ -174,7 +174,7 @@ function feedback() {
 }
 
 function initmap() {
-    var mapurl = "https://ideapublic.cartodb.com/tables/rides/embed_map?sql=SELECT%20*%20FROM%20rides%20where%20user_id%3D"+userID;    
+    var mapurl = "https://ideapublic.cartodb.com/tables/rides/embed_map?sql=SELECT%20*%20FROM%20rides%20where%20username%3D"+username;    
     document.getElementById('mapframe').src = mapurl;
 }
 
@@ -206,7 +206,7 @@ function fakeLocation() {
             distRide = 0;
             // console.log(startLat,startLong);
             }
-         else {
+         else {             
              rideDistance(prevLat,prevLong,lati,longi);
     		}
 
@@ -228,14 +228,13 @@ function fakeLocation() {
 // location by GPS
 function bikeLocation() {
     
-    if (timer_is_on==1) {
         var getBikeLocation = function() {
             var geoSuccess = function(p) {
         
                 var lati = p.coords.latitude;
                 var longi = p.coords.longitude;
-                
-                // grab location to calc distance
+                                
+                // set initial dist to 0
                 if ( counter == 0 ) { 
                     startLat = lati;
                     startLong = longi;
@@ -243,7 +242,7 @@ function bikeLocation() {
                     distRide = 0;
                     // console.log(startLat,startLong);
                     }
-                 else {
+                 else { // calculate distance
                      rideDistance(prevLat,prevLong,lati,longi);
             		}
 
@@ -251,21 +250,23 @@ function bikeLocation() {
                 cartodbTrace(rideID,counter,lati,longi);
                 openthedata(counter,lati,longi,distance);
 
-
                 // could be used save data locally and then send when online:
                 // https://github.com/alexgibson/OfflineForm/blob/master/offlineData.js
+              
+                counter=counter+1; // increment only on success?
+                prevLat = lati; // set location for next distance measurement
+                prevLong = longi;
                 
-            };
+            }; // end if success
             var geoFail = function() {
                 // write failure to cartoDB ??
             };
             navigator.geolocation.getCurrentPosition(geoSuccess, geoFail);
+            timer=setTimeout("bikeLocation()",gpsInterval);      
         };
 
+    if (timer_is_on==1) {
         getBikeLocation();    
-        counter=counter+1; // increment here or on success?
-        timer=setTimeout("bikeLocation()",gpsInterval);    
-
     }
 }
 
@@ -330,7 +331,7 @@ function cartodbLine(rideID) {
 
     if (write_to_carto) { 
 
-        var sqlInsert = "&q=INSERT INTO rides(the_geom,username,ride_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,'"+ username +"' as user_id,"+ rideID +" as ride_id FROM (SELECT the_geom, user_id FROM gps_traces WHERE user_id="+ userID +" AND ride_id="+ rideID +") as traces";
+        var sqlInsert = "&q=INSERT INTO rides(the_geom,username,ride_id) SELECT ST_Multi(ST_MakeLine(traces.the_geom)) as the_geom,'"+ username +"' as username,"+ rideID +" as ride_id FROM (SELECT the_geom, username FROM gps_traces WHERE username='"+ username +"' AND ride_id="+ rideID +") as traces";
         var theUrl = urlBase + cartoKey + sqlInsert;
 
         var xmlHttp = null;
@@ -453,6 +454,7 @@ function rideDistance(lat1,lon1,lat2,lon2) {
 	if (unit=="K") { dist = dist * 1.609344 }
 	if (unit=="N") { dist = dist * 0.8684 }
 	
+	alert(dist+"km");
 	distance = Math.round(dist * 1000); // km to meters
 	distRide +=  distance; 
 	
