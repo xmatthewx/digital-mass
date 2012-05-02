@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=320; user-scalable=no" />
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <title>Digital Mass</title>
+    <title>Digital Mass - Settings</title>
       <link rel="stylesheet" href="master.css" type="text/css" media="screen" title="no title">
   
       <script type="text/javascript" charset="utf-8" src="cordova-1.5.0.js"></script>
@@ -14,10 +14,13 @@
 
 
 </head>
-<body onload="init();initBike();" id="stage" class="theme">
-    <div id="opendata">
-    </div>  
-    
+<body onload="loadSettings();" id="stage" class="theme">
+    <div id="menu" style="display:block;" >
+        <ul>
+            <li id=""><a href="index.html">Back</a></li>        
+        </ul>
+    </div>
+
     <div id="settings">
         <form action="javascript:saveSettings();">
             <p>Choose a public username.</p>
@@ -25,32 +28,19 @@
             <input type="submit" value="Submit" />
             <input type="button" value="Cancel" onclick="window.history.back();" />
             <input type="button" value="Delete" onclick="javascript:deleteSettings();" />
-            <br />
         </form>
     </div>
-    
-    
-    <div id="stats" >
-        <ul>
-            <li id="ride-number">Ready</li>
-            <li id="time">0:00:00</li>
-            <li id="distance">0.00 km</li>
-            <li class="secondary">All time: <span id="dist-Lifetime" >0.0 km</span></li>
-        </ul>
-    </div>
-    <div id="links" >
-        <ul>
-            <li id="maplink" ><a href="map.html">View Map</a></li>  
-        </ul>
-    </div>
-    
 
-
-    <div id="button">
-        <a id="start" href="#" class="" onclick="iotbike();"><img alt="start" src="images/button-off.png" /></a>
-        <a id="stop" style="display:none;" href="#" class="" onclick="iotOff();"><img alt="start" src="images/button-on.png" /></a>
-    </div>
-
+    <dl id="thedata" >
+        <p>We don't store, share or send this data. But if you contact us for support, we might ask you for it to troubleshoot.</p>
+        <dt>Platform:</dt><dd id="platform"> &nbsp;</dd>
+        <dt>Version: </dt><dd id="version">&nbsp;</dd>
+        <dt>UUID:</dt><dd id="uuid"> &nbsp;</dd>
+        <dt>Name:</dt><dd id="name">&nbsp;</dd>
+        <dt>Width:</dt><dd id="width"> &nbsp;</dd>
+        <dt>Height:</dt><dd id="height">&nbsp;</dd>
+        <dt>Color Depth:</dt><dd id="colorDepth"></dd>
+    </dl>
     
   </body>
 </html>
